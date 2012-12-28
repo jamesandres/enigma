@@ -29,9 +29,9 @@ Enigma.prototype.init = function (rotorSettings) {
 Enigma.prototype.initRotors = function (rotorSettings) {
   var ciphers = [
       // ABCDEFGHIJKLMNOPQRSTUVWXYZ
-        'BDFHJLCPRTXVZNYEIWGAKMUSQO', // 1930, Enigma I
-        'AJDKSIRUXBLHWTMCQGZNPYFVOE', // 1930, Enigma I
-        'EKMFLGDQVZNTOWYHXUSPAIBRCJ', // 1930, Enigma I
+        'EKMFLGDQVZNTOWYHXUSPAIBRCJ', // 1930, Enigma I (L)
+        'AJDKSIRUXBLHWTMCQGZNPYFVOE', // 1930, Enigma I (M)
+        'BDFHJLCPRTXVZNYEIWGAKMUSQO', // 1930, Enigma I (R)
         // 'ESOVPZJAYQUIRHXLNFTGKDCMWB', // DEC 1938, M3 Army
         // 'VZBRGITYUPSDNHLXAWMJQOFECK', // DEC 1938, M3 Army
         // 'JPGVOUMFYQBENHZRDKASXLICTW', // 1939, M3 & M4 Naval (FEB 1942)
@@ -42,13 +42,15 @@ Enigma.prototype.initRotors = function (rotorSettings) {
 
   rotorSettings = rotorSettings || [];
 
-  for (var i = 0, len = ciphers.length; i < len; i++) {
+  // Stack the rotors in reverse, this corresponds to how the actual machine's
+  // electrical pathway went from R -> M -> L -> REFLECTOR -> L -> M -> R
+  for (var i = ciphers.length - 1; i >= 0; i--) {
     cipher = ciphers[i];
     rotor  = new Rotor(cipher, rotorSettings[i] || 0);
 
     rotor.i = i; // DEBUG
 
-    if (i == 0) {
+    if (i == ciphers.length - 1) {
       this.firstRotor = rotor;
     }
 
@@ -60,6 +62,7 @@ Enigma.prototype.initRotors = function (rotorSettings) {
     prevRotor = rotor;
   };
 
+  //                          ABCDEFGHIJKLMNOPQRSTUVWXYZ
   rotor.next = new Reflector('YRUHQSLDPXNGOKMIEBFZCWVJAT');
   rotor.next.prev = rotor;
 };
@@ -84,7 +87,7 @@ Enigma.prototype.encipher = function(string) {
 
   for (var i = 0, len = string.length; i < len; i++) {
     chr = string[i];
-    console.log(chr, 'START enciphering chr'); // DEBUG
+    // console.log(chr, 'START enciphering chr'); // DEBUG
 
     result.push(this.firstRotor.encipher(chr));
 
@@ -119,17 +122,21 @@ Rotor.prototype.rotate = function () {
 };
 
 Rotor.prototype.encipher = function (chr, dir) {
-  var encipheredChr = this.cipher[(chr.charCodeAt(0) - 65 + this.setting) % 26] || 0;
+  var encipheredChr;
 
   dir = typeof dir === 'boolean' ? dir : true;
 
-  console.log([dir ? 'FORWARD' : 'BACKWARD', chr, chr.charCodeAt(0) - 65, this.setting, '-> ' + encipheredChr], 'Rotor #' + this.i); // DEBUG
-
   if (dir) { // Forward
+    encipheredChr = this.cipher[(chr.charCodeAt(0) - 65 + this.setting) % 26] || 0;
+    // console.log([dir ? '>>' : '<<', chr + ' -> ' + encipheredChr], 'Rotor #' + this.i); // DEBUG
     if (this.next) {
       return this.next.encipher(encipheredChr, dir);
     }
   } else {  // Reverse
+    var pos = this.cipher.indexOf(chr) - this.setting;
+    pos = pos < 0 ? pos + 26 : pos;
+    encipheredChr = String.fromCharCode(pos % 26 + 65) || 0;
+    // console.log([dir ? '>>' : '<<', chr + ' -> ' + encipheredChr], 'Rotor #' + this.i); // DEBUG
     if (this.prev) {
       return this.prev.encipher(encipheredChr, dir);
     }
@@ -138,17 +145,9 @@ Rotor.prototype.encipher = function (chr, dir) {
   return encipheredChr;
 };
 
-Rotor.prototype.decipher = function (chr) {
-  var decipheredChr = (this.cipher.indexOf(chr) + this.setting) % 26 || 0;
-
-  console.log(['BACKWARD', chr, chr.charCodeAt(0) - 65, this.setting, '-> ' + decipheredChr], 'Rotor #' + this.i); // DEBUG
-
-  if (this.prev) {
-    return this.prev.decipher(decipheredChr);
-  }
-
-  return decipheredChr;
-};
+Rotor.prototype.chrPos = function (chr) {
+  return ;
+}
 
 /**
  * The reflector at the end of the rotor set
@@ -165,8 +164,6 @@ Reflector.prototype.rotate = function () {
 
 Reflector.prototype.encipher = function (chr) {
   var mappedChr = this.cipher[(chr.charCodeAt(0) - 65) % 26];
-
-  console.log(['REFLECTOR', chr, chr.charCodeAt(0) - 65, '-> ' + mappedChr], 'Reflector'); // DEBUG
-
+  // console.log(['||', chr + ' -> ' + mappedChr], 'Reflector'); // DEBUG
   return this.prev.encipher(mappedChr, false);
 };
