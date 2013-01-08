@@ -20,9 +20,34 @@
   <![endif]-->
 </head>
 <body>
-  <script type="text/x-handlebars" data-template-name="application">
+  <!--<script type="text/x-handlebars" data-template-name="application">
     <h1>Hello from Ember.js</h1>
-  </script>
+  </script>-->
+
+  <h1>James' Enigma</h1>
+
+  <div class="input">
+    <h3>Plaintext:</h3>
+    <textarea id="plaintext"></textarea>
+    <div>
+      <input type="button" value="Encipher!" id="encipher">
+      <input type="button" value="Reset rotors to default" id="reset">
+    </div>
+  </div>
+
+  <div class="enigma">
+    <h3>Rotor settings:</h3>
+    <span id="rotor-0"></span>
+    <span id="rotor-1"></span>
+    <span id="rotor-2"></span>
+  </div>
+
+  <div class="output">
+    <h3>Ciphertext:</h3>
+    <pre id="ciphertext"></pre>
+  </div>
+
+  <small><strong>Pro tip: Use the Javascript console to communicate with the <code>enigma</code> object directly.</strong></small>
 
   <!-- The missing protocol means that it will match the current protocol, either http or https. If running locally, we use the local jQuery. -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
@@ -35,9 +60,29 @@
   var enigma;
 
   jQuery(function () {
+    var $plaintext  = $('#plaintext'),
+        $ciphertext = $('#ciphertext'),
+        updateRotors = function () {
+          var rotor = enigma.firstRotor;
+          for (var i = 0; i < 3; i++) {
+            console.log(rotor);
+            $('#rotor-' + i).html(String.fromCharCode(rotor.setting + 65));
+            rotor = rotor.next;
+          };
+        };
 
     enigma = new Enigma();
-    console.log(enigma, 'enigma');
+    updateRotors();
+
+    $('#reset').click(function () {
+      enigma.setRotorSettings();
+      updateRotors();
+    })
+
+    $('#encipher').click(function () {
+      $ciphertext.html(enigma.encipher($plaintext.val()));
+      updateRotors();
+    });
 
   });
   </script>
