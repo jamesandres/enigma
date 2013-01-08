@@ -31,15 +31,18 @@
     <textarea id="plaintext"></textarea>
     <div>
       <input type="button" value="Encipher!" id="encipher">
-      <input type="button" value="Reset rotors to default" id="reset">
     </div>
   </div>
 
   <div class="enigma">
     <h3>Rotor settings:</h3>
-    <span id="rotor-0"></span>
-    <span id="rotor-1"></span>
-    <span id="rotor-2"></span>
+    <input type="text" size="2" id="rotor-0" value="">
+    <input type="text" size="2" id="rotor-1" value="">
+    <input type="text" size="2" id="rotor-2" value="">
+    <div>
+      <input type="button" value="Apply rotor settings" id="setRotors">
+      <input type="button" value="Reset rotors to default" id="resetRotors">
+    </div>
   </div>
 
   <div class="output">
@@ -66,7 +69,7 @@
           var rotor = enigma.firstRotor;
           for (var i = 0; i < 3; i++) {
             console.log(rotor);
-            $('#rotor-' + i).html(String.fromCharCode(rotor.setting + 65));
+            $('#rotor-' + i).val(String.fromCharCode(rotor.setting + 65));
             rotor = rotor.next;
           };
         };
@@ -74,10 +77,19 @@
     enigma = new Enigma();
     updateRotors();
 
-    $('#reset').click(function () {
+    $('#resetRotors').click(function () {
       enigma.setRotorSettings();
       updateRotors();
-    })
+    });
+
+    $('#setRotors').click(function () {
+      enigma.setRotorSettings([
+        $('#rotor-0').val(),
+        $('#rotor-1').val(),
+        $('#rotor-2').val()
+      ]);
+      updateRotors();
+    });
 
     $('#encipher').click(function () {
       $ciphertext.html(enigma.encipher($plaintext.val()));

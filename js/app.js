@@ -73,7 +73,12 @@ Enigma.prototype.setRotorSettings = function (rotorSettings) {
   rotorSettings = rotorSettings || [];
 
   while (rotor) {
-    rotor.setting = rotorSettings[i] || 0;
+    if (typeof rotorSettings[i] === 'string') {
+      rotor.setting = rotorSettings[i].charCodeAt(0) - 65;
+    }
+    else {
+      rotor.setting = rotorSettings[i] || 0;
+    }
 
     rotor = rotor.next;
     i++;
